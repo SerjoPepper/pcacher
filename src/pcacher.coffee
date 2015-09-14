@@ -3,6 +3,7 @@ promise = require 'bluebird'
 ijson = require 'i-json'
 crypto = require 'crypto'
 _ = require 'lodash'
+redis = require 'redis'
 MAX_JSON_LENGTH = 1024 * 1024
 
 promise.promisifyAll(redis)

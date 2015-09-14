@@ -1,2 +1,2 @@
 require('coffee-script/register');
-require('src/pcacher');
+module.exports = require('./src/pcacher');
