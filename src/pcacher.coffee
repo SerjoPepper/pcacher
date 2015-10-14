@@ -86,7 +86,7 @@ class Cacher
           else
             JSON.parse(res)
         else
-          fallback().then (res) ->
+          execValue(value).then (res) ->
             if !res? || Array.isArray(res) && !res.length
               res
             else
