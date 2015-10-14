@@ -75,7 +75,7 @@ class Cacher
         promise.resolve(val.val)
     else
       client.getAsync(key)
-      .then (res) ->
+      .then (res) =>
         if res && !options.reset
           buf = new Buffer(res)
           # если больше, начинает течь память (именно в новой ноде)
@@ -86,11 +86,11 @@ class Cacher
           else
             JSON.parse(res)
         else
-          execValue(value).then (res) ->
+          execValue(value).then (res) =>
             if !res? || Array.isArray(res) && !res.length
               res
             else
-              redisClient.multi()
+              @client.multi()
                 .set(key, JSON.stringify(res))
                 .expire(key, ttl)
                 .execAsync()
