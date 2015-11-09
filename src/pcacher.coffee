@@ -13,35 +13,47 @@ toS = (val) ->
 
 execValue = (value) ->
   promise.try ->
-    if _.isFunction(value) then value() else value
+    value = if _.isFunction(value) then value() else value
+    promise.resolve(value)
 
 
 ###
-options.disable
-options.reset
-options.ttl
+Cacher class
 ###
 class Cacher
 
+  ###
+  Default config, can be extended
+  ###
   @config: {
     ttl: '1h'
     ns: 'pcacher'
     redis: {}
   }
 
-  # config.ns
-  # config.redis
-  # config.ttl
+  ###
+  Constructor
+  @param {Object} config Config
+  @option config {String} ns Prefix for saved keys
+  @option config {Object} redis Redis config. See see https://github.com/NodeRedis/node_redis#options-is-an-object-with-the-following-possible-properties
+  @option config {String|Number} ttl TTL of key. Can be number of seconds or string, like '1h' or '15min'.
+  ###
   constructor: (config = {}) ->
     @config = _.extend({}, config, Cacher.config)
     @client = redis.createClient(@config.redis)
     @memoryCache = {}
 
-  # options.reset
-  # options.nocache
-  # options.ttl
-  # options.memory = Boolean
-  # options.ns
+  ###
+  Cache value
+  @param {String} key Stored key name
+  @param {Object} [options] Options
+  @option options {Number|String} [ttl] Number in seconds or duration as string, like '15min' or '2h'
+  @option options {Boolean} [reset] Reset stored value, resave it
+  @option options {Boolean} [memory] Store data in memory, NOT in Redis
+  @option options {Boolean} [ns] Prefix for saved keys
+  @option options {Boolean} [nocache] Nocache value
+  @param {Function|Promise|Any} value Value to save. If type is a function, this function can return a promise
+  ###
   memoize: (key, [options]..., value) ->
     if _.isString(options) || _.isNumber(options)
       options = {ttl: options}

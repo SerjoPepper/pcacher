@@ -1,2 +1,1 @@
-require('coffee-script/register');
-module.exports = require('./src/pcacher');
+module.exports = require('./lib/pcacher');
