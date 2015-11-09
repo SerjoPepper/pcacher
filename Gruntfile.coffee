@@ -1,5 +1,6 @@
 module.exports = (grunt) ->
   grunt.loadNpmTasks('grunt-coffeelint')
+  grunt.loadNpmTasks('grunt-contrib-coffee')
 
   grunt.initConfig {
     coffeelint: {
