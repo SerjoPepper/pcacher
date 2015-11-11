@@ -15,7 +15,7 @@ var cache = pcacher({
   ns: 'pcacher' // optional. Prefix for keys in redis. Default is 'pcacher'
 });
 
-cache('key', function () {
+cache.memoize('key', function () {
   return 'value';
 }).then(function (val) {
   val === 'value'; // true
@@ -25,13 +25,13 @@ cache('key', function () {
 ## Value
 Value can be a function (can return a promise) or promise or any JSON-serialized object.
 ```js
-cache('key', '15min', function () {
+cache.memoize('key', '15min', function () {
   somePromisifiedQueryToDb(); // should return a promise, this query will be cached for 15 min
 }).then(function (val) {
   console.log(val);
 });
 
-cache('key', '15min', function () {
+cache.memoize('key', '15min', function () {
   return {a: 1};
 }).then(function (val) {
   console.log(val); // {a: 1}
@@ -48,7 +48,7 @@ There are follow options:
  - `nocache` Boolean. Use it to off cache
 
 ```js
-cache('key', {
+cache.memoize('key', {
   ns: 'my_namespace',
   reset: true, // Reset stored value, resave it
   memory: true, // Store data in memory, NOT in Redis
