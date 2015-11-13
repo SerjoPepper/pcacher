@@ -41,6 +41,7 @@ class Cacher
   constructor: (config = {}) ->
     @config = _.extend({}, config, Cacher.config)
     @client = redis.createClient(@config.redis)
+    @client.select(@config.db) if @config.db
     @memoryCache = {}
 
   ###
