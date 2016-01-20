@@ -4,6 +4,7 @@ ijson = require 'i-json'
 crypto = require 'crypto'
 _ = require 'lodash'
 redis = require 'redis'
+co = require 'co'
 MAX_JSON_LENGTH = 1024 * 1024
 
 promise.promisifyAll(redis)
@@ -12,8 +13,9 @@ toS = (val) ->
   if typeof val is 'string' then ms(val) / 1e3 else val
 
 execValue = (value) ->
-  promise.try ->
-    value = if _.isFunction(value) then value() else value
+  if _.isFunction(value)
+    promise.resolve co value
+  else
     promise.resolve(value)
 
 
@@ -39,9 +41,12 @@ class Cacher
   @option config {String|Number} ttl TTL of key. Can be number of seconds or string, like '1h' or '15min'.
   ###
   constructor: (config = {}) ->
-    @config = _.extend({}, config, Cacher.config)
-    @client = redis.createClient(@config.redis)
-    @client.select(@config.db) if @config.db
+    @config = _.extend({}, Cacher.config, config)
+    if config.redisClient
+      @client = redisClient
+    else
+      @client = redis.createClient(@config.redis)
+      @client.select(@config.redis.db) if @config.redis.db
     @memoryCache = {}
 
   ###
@@ -73,7 +78,7 @@ class Cacher
       prefix = key[0..2]
       mem = @memoryCache[prefix] ||= {}
       val = mem[key]
-      if !val? || val.createTs + ttl * 1000 < Date.now()
+      if !val? || val.createTs + ttl * 1e3 < Date.now()
         execValue(value).then (res) ->
           if !res? || Array.isArray(res) && !res.length
             res
@@ -83,6 +88,10 @@ class Cacher
               val: res
               createTs: Date.now()
             }
+            setTimeout(
+              -> delete mem[key]
+              ttl * 1e3
+            )
             mem[key].val
       else
         promise.resolve(val.val)

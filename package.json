@@ -1,6 +1,6 @@
 {
   "name": "pcacher",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Promisified redis cache",
   "main": "index.js",
   "scripts": {
@@ -24,6 +24,7 @@
   "homepage": "https://github.com/SerjoPepper/pcacher#readme",
   "dependencies": {
     "bluebird": "^2.9.34",
+    "co": "^4.6.0",
     "i-json": "^0.1.4",
     "lodash": "^3.10.1",
     "ms": "^0.7.1",
