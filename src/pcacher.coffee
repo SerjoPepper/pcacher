@@ -5,7 +5,8 @@ crypto = require 'crypto'
 _ = require 'lodash'
 redis = require 'redis'
 co = require 'co'
-MAX_JSON_LENGTH = 1024 * 1024
+stringify = require 'json-stable-stringify'
+MAX_JSON_LENGTH = 1024 * 1024 * 10
 
 promise.promisifyAll(redis)
 
@@ -17,6 +18,9 @@ execValue = (value) ->
     promise.resolve co value
   else
     promise.resolve(value)
+
+objToKey = (obj) ->
+  key = crypto.createHash('sha1').update(stringify(key)).digest('hex').toString()
 
 
 ###
@@ -66,7 +70,7 @@ class Cacher
     else
       options ||= {}
     options = _.extend({}, @config, options)
-    key = options.ns + ':' + (if _.isString(key) then key else JSON.stringify(key))
+    key = options.ns + ':' + (if !_.isObject(key) then String(key) else objToKey(key))
     ttl = toS(options.ttl)
     client = @client
 
@@ -74,7 +78,6 @@ class Cacher
       return execValue(value)
 
     if options.memory
-      key = crypto.createHash('sha1').update(key).digest('hex').toString()
       prefix = key[0..2]
       mem = @memoryCache[prefix] ||= {}
       val = mem[key]
@@ -84,10 +87,9 @@ class Cacher
             res
           else
             prefix = key[0..2]
-            mem[key] = {
+            mem[key] =
               val: res
               createTs: Date.now()
-            }
             setTimeout(
               -> delete mem[key]
               ttl * 1e3
