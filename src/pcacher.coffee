@@ -20,7 +20,7 @@ execValue = (value) ->
     promise.resolve(value)
 
 objToKey = (obj) ->
-  key = crypto.createHash('sha1').update(stringify(key)).digest('hex').toString()
+  crypto.createHash('sha1').update(stringify(obj)).digest('hex').toString()
 
 
 ###
