@@ -121,8 +121,8 @@ class Cacher
                 JSON.parse(unzipped)
               catch
                 JSON.parse(res)
-          # если больше, начинает течь память (именно в новой ноде)
-          JSON.parse(res)
+          else
+            JSON.parse(res)
         else
           execValue(value).then (res) =>
             if !res? || Array.isArray(res) && !res.length
@@ -134,7 +134,7 @@ class Cacher
                   zip(str)
                 else
                   str
-              .then =>
+              .then (str) =>
                 @client.multi()
                   .set(key, str)
                   .expire(key, ttl)
