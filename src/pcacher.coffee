@@ -4,7 +4,7 @@ _ = require 'lodash'
 redis = require 'redis'
 co = require 'co'
 stringify = require 'json-stable-stringify'
-shorthash = require 'shorthash'
+sh = require 'shorthash'
 zlib = require 'zlib'
 
 promise.promisifyAll(redis)
