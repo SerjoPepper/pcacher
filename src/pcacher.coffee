@@ -131,7 +131,7 @@ class Cacher
               str = JSON.stringify(res)
               promise.try ->
                 if options.gzip
-                  gzip(str)
+                  zip(str)
                 else
                   str
               .then =>
