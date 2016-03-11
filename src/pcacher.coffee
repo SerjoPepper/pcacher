@@ -1,12 +1,11 @@
 ms = require 'ms'
 promise = require 'bluebird'
-ijson = require 'i-json'
-crypto = require 'crypto'
 _ = require 'lodash'
 redis = require 'redis'
 co = require 'co'
 stringify = require 'json-stable-stringify'
-MAX_JSON_LENGTH = 1024 * 1024 * 10
+shorthash = require 'shorthash'
+zlib = require 'zlib'
 
 promise.promisifyAll(redis)
 
@@ -20,7 +19,19 @@ execValue = (value) ->
     promise.resolve(value)
 
 objToKey = (obj) ->
-  crypto.createHash('sha1').update(stringify(obj)).digest('hex').toString()
+  sh.unique(stringify(obj))
+
+zip = (str) ->
+  promise.fromNode (cb) ->
+    zlib.gzip(str, cb)
+  .then (buf) ->
+    buf.toString('base64')
+
+unzip = (str) ->
+  promise.fromNode (cb) ->
+    zlib.gunzip(new Buffer(str, 'base64'), cb)
+  .then (buf) ->
+    buf.toString()
 
 
 ###
@@ -35,12 +46,14 @@ class Cacher
     ttl: '1h'
     ns: 'pcacher'
     redis: {}
+    gzip: true
   }
 
   ###
   Constructor
   @param {Object} config Config
   @option config {String} ns Prefix for saved keys
+  @option options {Boolean} [gzip] Gzip data
   @option config {Object} redis Redis config. See see https://github.com/NodeRedis/node_redis#options-is-an-object-with-the-following-possible-properties
   @option config {String|Number} ttl TTL of key. Can be number of seconds or string, like '1h' or '15min'.
   ###
@@ -62,6 +75,7 @@ class Cacher
   @option options {Boolean} [memory] Store data in memory, NOT in Redis
   @option options {Boolean} [ns] Prefix for saved keys
   @option options {Boolean} [nocache] Nocache value
+  @option options {Boolean} [gzip] Gzip data
   @param {Function|Promise|Any} value Value to save. If type is a function, this function can return a promise
   ###
   memoize: (key, [options]..., value) ->
@@ -101,24 +115,31 @@ class Cacher
       client.getAsync(key)
       .then (res) =>
         if res && !options.reset
-          buf = new Buffer(res)
+          if options.gzip
+            unzip(res).then (unzipped) ->
+              try
+                JSON.parse(unzipped)
+              catch
+                JSON.parse(res)
           # если больше, начинает течь память (именно в новой ноде)
-          if buf.length > MAX_JSON_LENGTH
-            parser = ijson.createParser()
-            parser.update(buf)
-            parser.result()
-          else
-            JSON.parse(res)
+          JSON.parse(res)
         else
           execValue(value).then (res) =>
             if !res? || Array.isArray(res) && !res.length
               res
             else
-              @client.multi()
-                .set(key, JSON.stringify(res))
-                .expire(key, ttl)
-                .execAsync()
-                .then -> res
+              str = JSON.stringify(res)
+              promise.try ->
+                if options.gzip
+                  gzip(str)
+                else
+                  str
+              .then =>
+                @client.multi()
+                  .set(key, str)
+                  .expire(key, ttl)
+                  .execAsync()
+                  .then -> res
 
 
 module.exports = (config) ->

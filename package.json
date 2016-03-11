@@ -1,6 +1,6 @@
 {
   "name": "pcacher",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Promisified redis cache",
   "main": "index.js",
   "scripts": {
@@ -25,11 +25,11 @@
   "dependencies": {
     "bluebird": "^2.9.34",
     "co": "^4.6.0",
-    "i-json": "^0.1.4",
     "json-stable-stringify": "^1.0.1",
     "lodash": "^3.10.1",
     "ms": "^0.7.1",
-    "redis": "^1.0.0"
+    "redis": "^1.0.0",
+    "shorthash": "0.0.2"
   },
   "devDependencies": {
     "coffeelint": "^1.11.1",
