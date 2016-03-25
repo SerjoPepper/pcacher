@@ -112,44 +112,46 @@ class Cacher
       else
         promise.resolve(val.val)
     else
-      client.getAsync(key)
-      .then (res) ->
-        if res && !options.reset
-          if options.gzip
-            unzip(res)
-            .catch (e) ->
-              console.error(e.stack) if e.stack
-              console.error(e)
+      client.getAsync(key).then (res) ->
+        promise.resolve(res).then (res) ->
+          if res && !options.reset
+            if options.gzip
+              unzip(res)
+              .catch (e) ->
+                console.error(e.stack) if e.stack
+                console.error(e)
+                res
+              .then (unzipped) ->
+                try
+                  JSON.parse(unzipped)
+                catch
+                  JSON.parse(res)
+            else
+              JSON.parse(res)
+        .catch (e) ->
+          console.error(e.stack) if e.stack
+          console.error(e)
+          console.error('key', key)
+          console.error('value', res)
+        .then (res) =>
+          if res?
+            return res
+          execValue(value).then (res) =>
+            if !res? || Array.isArray(res) && !res.length
               res
-            .then (unzipped) ->
-              try
-                JSON.parse(unzipped)
-              catch
-                JSON.parse(res)
-          else
-            JSON.parse(res)
-      .catch (e) ->
-        console.error(e.stack) if e.stack
-        console.error(e)
-      .then (res) =>
-        if res?
-          return res
-        execValue(value).then (res) =>
-          if !res? || Array.isArray(res) && !res.length
-            res
-          else
-            str = JSON.stringify(res)
-            promise.try ->
-              if options.gzip
-                zip(str)
-              else
-                str
-            .then (str) =>
-              @client.multi()
-                .set(key, str)
-                .expire(key, ttl)
-                .execAsync()
-                .then -> res
+            else
+              str = JSON.stringify(res)
+              promise.try ->
+                if options.gzip
+                  zip(str)
+                else
+                  str
+              .then (str) =>
+                @client.multi()
+                  .set(key, str)
+                  .expire(key, ttl)
+                  .execAsync()
+                  .then -> res
 
 
 module.exports = (config) ->
