@@ -1,6 +1,6 @@
 {
   "name": "pcacher",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "description": "Promisified redis cache",
   "main": "index.js",
   "scripts": {

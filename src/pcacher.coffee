@@ -120,6 +120,8 @@ class Cacher
               .catch (e) ->
                 console.error(e.stack) if e.stack
                 console.error(e)
+                console.error('key', key)
+                console.error('value', res)
                 res
               .then (unzipped) ->
                 try
@@ -131,8 +133,6 @@ class Cacher
         .catch (e) ->
           console.error(e.stack) if e.stack
           console.error(e)
-          console.error('key', key)
-          console.error('value', res)
         .then (res) =>
           if res?
             return res
