@@ -116,30 +116,40 @@ class Cacher
       .then (res) =>
         if res && !options.reset
           if options.gzip
-            unzip(res).then (unzipped) ->
+            unzip(res)
+            .catch (e) ->
+              console.error(e.stack) if e.stack
+              console.error(e)
+              res
+            .then (unzipped) ->
               try
                 JSON.parse(unzipped)
               catch
                 JSON.parse(res)
           else
             JSON.parse(res)
-        else
-          execValue(value).then (res) =>
-            if !res? || Array.isArray(res) && !res.length
-              res
-            else
-              str = JSON.stringify(res)
-              promise.try ->
-                if options.gzip
-                  zip(str)
-                else
-                  str
-              .then (str) =>
-                @client.multi()
-                  .set(key, str)
-                  .expire(key, ttl)
-                  .execAsync()
-                  .then -> res
+      .catch (e) ->
+        console.error(e.stack) if e.stack
+        console.error(e)
+      .then (res) =>
+        if res?
+          return res
+        execValue(value).then (res) =>
+          if !res? || Array.isArray(res) && !res.length
+            res
+          else
+            str = JSON.stringify(res)
+            promise.try ->
+              if options.gzip
+                zip(str)
+              else
+                str
+            .then (str) =>
+              @client.multi()
+                .set(key, str)
+                .expire(key, ttl)
+                .execAsync()
+                .then -> res
 
 
 module.exports = (config) ->
