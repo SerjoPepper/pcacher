@@ -113,7 +113,7 @@ class Cacher
         promise.resolve(val.val)
     else
       client.getAsync(key)
-      .then (res) =>
+      .then (res) ->
         if res && !options.reset
           if options.gzip
             unzip(res)
