@@ -18,18 +18,27 @@ execValue = (value) ->
   else
     promise.resolve(value)
 
-objToKey = (obj) ->
-  sh.unique(stringify(obj))
+objToKey = (obj, notConvertString) ->
+  if notConvertString and _.isString(obj)
+    obj
+  else
+    sh.unique(stringify(obj))
 
-zip = (str) ->
+zip = (str, toBase64) ->
   promise.fromNode (cb) ->
     zlib.gzip(str, cb)
   .then (buf) ->
-    buf.toString('base64')
+    if toBase64
+      buf.toString('base64')
+    else
+      buf
 
-unzip = (str) ->
+unzip = (buf) ->
+  # backward compatibility
+  unless Buffer.isBuffer(buf)
+    buf = new Buffer(buf, 'base64')
   promise.fromNode (cb) ->
-    zlib.gunzip(new Buffer(str, 'base64'), cb)
+    zlib.gunzip(buf, cb)
   .then (buf) ->
     buf.toString()
 
@@ -46,7 +55,7 @@ class Cacher
     ttl: '1h'
     ns: 'pcacher'
     redis: {}
-    gzip: true
+    gzip: false
   }
 
   ###
@@ -62,7 +71,7 @@ class Cacher
     if config.redisClient
       @client = redisClient
     else
-      @client = redis.createClient(@config.redis)
+      @client = redis.createClient(_.extend(detect_buffers: true, @config.redis))
       @client.select(@config.redis.db) if @config.redis.db
     @memoryCache = {}
 
@@ -84,7 +93,6 @@ class Cacher
     else
       options ||= {}
     options = _.extend({}, @config, options)
-    key = options.ns + ':' + (if !_.isObject(key) then String(key) else objToKey(key))
     ttl = toS(options.ttl)
     client = @client
 
@@ -92,6 +100,7 @@ class Cacher
       return execValue(value)
 
     if options.memory
+      key = options.ns + ':' + objToKey(key, true)
       prefix = key[0..2]
       mem = @memoryCache[prefix] ||= {}
       val = mem[key]
@@ -112,6 +121,7 @@ class Cacher
       else
         promise.resolve(val.val)
     else
+      key = options.ns + ':' + objToKey(key)
       client.getAsync(key).then (res) =>
         promise.resolve(res).then (res) ->
           if res && !options.reset
@@ -141,9 +151,9 @@ class Cacher
               res
             else
               str = JSON.stringify(res)
-              promise.try ->
+              promise.try =>
                 if options.gzip
-                  zip(str)
+                  zip(str, !@client.detect_buffers)
                 else
                   str
               .then (str) =>

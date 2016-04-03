@@ -1,6 +1,6 @@
 {
   "name": "pcacher",
-  "version": "1.0.20",
+  "version": "1.0.21",
   "description": "Promisified redis cache",
   "main": "index.js",
   "scripts": {
@@ -28,7 +28,7 @@
     "json-stable-stringify": "^1.0.1",
     "lodash": "^3.10.1",
     "ms": "^0.7.1",
-    "redis": "^1.0.0",
+    "redis": "^2.5.3",
     "shorthash": "0.0.2"
   },
   "devDependencies": {
