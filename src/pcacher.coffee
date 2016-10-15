@@ -13,10 +13,7 @@ toS = (val) ->
   if typeof val is 'string' then ms(val) / 1e3 else val
 
 execValue = (value) ->
-  if _.isFunction(value)
-    promise.resolve co value
-  else
-    promise.resolve(value)
+  promise.resolve co value
 
 objToKey = (obj, notConvertString) ->
   if notConvertString and _.isString(obj)
